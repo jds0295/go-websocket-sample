@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>James Websocket Go Percy</title>
+</head>
+
+<body>
+    <div class="center">
+        <h1>Amazing Chat app</h1>
+        <h3 id="chat-header">currently in chat: general</h3>
+        <h3 id="connection-header">Connect to Websocket: false</h3>
+
+        <form id="chatroom-selection">
+            <label for="chatroom">Chatroom:</label>
+            <input type="text" id="chatroom" name="chatroom"><br><br>
+            <input type="submit" value="Change chatroom">
+        </form>
+        <br>
+        <textarea class="messagearea" id="chatmesages" readonly name="chatarea" rows="4" cols="50"
+            placeholder="Welcome to chatroom"></textarea>
+        <br>
+        <form id="chatroom-message">
+            <label for="message">Message:</label>
+            <input type="text" id="message" name="message"> <br><br>
+            <input type="submit" value="Send Message">
+        </form>
+
+        <div style="border: 3px solid black; margin-top: 30px;">
+            <form id="login-form">
+                <label for="username">username</label>
+                <input type="text" id="username" name="username"><br>
+                <label for="password">password</label>
+                <input type="password" id="password" name=password><br><br>
+                <input type="submit" value="Login">
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        var selectedChat = "general";
+
+
+        class Event {
+            constructor(type, payload){
+                this.type = type;
+                this.payload = payload;
+            }
+        }
+
+        function routeEvent(event) {
+            if (event.type === undefined) {
+                alert("no type field in the event")
+            }
+
+            switch(event.type){
+                case "new_message":
+                    console.log("new_message");
+                    breal;
+                default:
+                    alert("unsupported message type");
+                    break;
+            }
+        }
+
+        function sendEvent(eventName, payload) {
+            const event = new Event (eventName, payload);
+            conn.send(JSON.stringify(event));
+        }
+
+        function changeChatroom() {
+            var newChat = document.getElementById("chatroom")
+            if(newChat != null && newChat.value != selectedChat) {
+                console.log(newChat);
+            }
+            // return false to not have the form navigate away
+            return flase;
+        }
+
+        
+        function sendMessage(){
+            var newMessage = document.getElementById("message")
+            if(newMessage != null) {
+                sendEvent("send_message", newMessage.value)
+            }
+            // return false to not have the form navigate away
+            return false;
+        }
+
+        function login() {
+            let formData = {
+                "userName": document.getElementById("username").value,
+                "password": document.getElementById("password").value
+            }
+
+            // send a request
+            fetch("login", {
+                method: 'post',
+                body: JSON.stringify(formData),
+                mode: 'cors'
+            // wait for promise to finish
+            }).then((response) => {
+                if(response.ok) {
+                    return response.json() // will contain the otp
+                } else {
+                    throw 'unauthorized';
+                }
+            }).then((data) => { // grab the returned data
+                // we are now authenticated
+                connectWebsocket(data.otp) // connect to ws using otp
+            }).catch((e) => {alert(e)})
+
+            return false //dont navigate away on form submit
+        }
+
+        function connectWebsocket(otp){
+
+        }
+
+        window.onload = function() {
+            document.getElementById("chatroom-selection").onsubmit = changeChatroom
+            document.getElementById("chatroom-message").onsubmit = sendMessage
+            document.getElementById("login-form").onsubmit = login
+
+            if(window["WebSocket"]) {
+                console.log("suports websockets")
+                // connect to WS
+                conn = new WebSocket("ws://" + document.location.host + "/ws")
+
+                // recieve messages
+                conn.onmessage = function(evt) {
+                    const eventData = JSON.parse(evt.data);
+
+                    const event = Object.assign(new Event, eventData);
+
+                    routeEvent(event);
+                }
+
+            }else {
+                alert('Browser does not support Websockets')
+            }
+        }
+
+    </script>
+
+    <style type="text/css">
+        body {
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            background: rgb(66, 56, 56);
+        }
+
+        .center {
+            margin: auto;
+            width: 50%;
+            border: 3px solid green;
+            padding: 10px;
+        }
+    </style>
+
+</body>
+
+</html>
