@@ -44,7 +44,7 @@
 
 
         class Event {
-            constructor(type, payload){
+            constructor(type, payload) {
                 this.type = type;
                 this.payload = payload;
             }
@@ -55,7 +55,7 @@
                 alert("no type field in the event")
             }
 
-            switch(event.type){
+            switch (event.type) {
                 case "new_message":
                     console.log("new_message");
                     breal;
@@ -66,23 +66,23 @@
         }
 
         function sendEvent(eventName, payload) {
-            const event = new Event (eventName, payload);
+            const event = new Event(eventName, payload);
             conn.send(JSON.stringify(event));
         }
 
         function changeChatroom() {
             var newChat = document.getElementById("chatroom")
-            if(newChat != null && newChat.value != selectedChat) {
+            if (newChat != null && newChat.value != selectedChat) {
                 console.log(newChat);
             }
             // return false to not have the form navigate away
             return flase;
         }
 
-        
-        function sendMessage(){
+
+        function sendMessage() {
             var newMessage = document.getElementById("message")
-            if(newMessage != null) {
+            if (newMessage != null) {
                 sendEvent("send_message", newMessage.value)
             }
             // return false to not have the form navigate away
@@ -91,7 +91,7 @@
 
         function login() {
             let formData = {
-                "userName": document.getElementById("username").value,
+                "username": document.getElementById("username").value,
                 "password": document.getElementById("password").value
             }
 
@@ -100,9 +100,9 @@
                 method: 'post',
                 body: JSON.stringify(formData),
                 mode: 'cors'
-            // wait for promise to finish
+                // wait for promise to finish
             }).then((response) => {
-                if(response.ok) {
+                if (response.ok) {
                     return response.json() // will contain the otp
                 } else {
                     throw 'unauthorized';
@@ -110,27 +110,28 @@
             }).then((data) => { // grab the returned data
                 // we are now authenticated
                 connectWebsocket(data.otp) // connect to ws using otp
-            }).catch((e) => {alert(e)})
+            }).catch((e) => { alert(e) })
 
             return false //dont navigate away on form submit
         }
 
-        function connectWebsocket(otp){
-
-        }
-
-        window.onload = function() {
-            document.getElementById("chatroom-selection").onsubmit = changeChatroom
-            document.getElementById("chatroom-message").onsubmit = sendMessage
-            document.getElementById("login-form").onsubmit = login
-
-            if(window["WebSocket"]) {
+        function connectWebsocket(otp) {
+            if (window["WebSocket"]) {
                 console.log("suports websockets")
                 // connect to WS
-                conn = new WebSocket("ws://" + document.location.host + "/ws")
+                conn = new WebSocket("ws://" + document.location.host + "/ws?otp="+otp)
+
+                conn.onopen = function (evt) {
+                    document.getElementById("connection-header").innerHTML = "Connect to Websocket: true"
+                }
+
+                conn.onclose = function (evt) {
+                    document.getElementById("connection-header").innerHTML = "Connect to Websocket: false"
+                    // reconnection goes here
+                }
 
                 // recieve messages
-                conn.onmessage = function(evt) {
+                conn.onmessage = function (evt) {
                     const eventData = JSON.parse(evt.data);
 
                     const event = Object.assign(new Event, eventData);
@@ -138,9 +139,16 @@
                     routeEvent(event);
                 }
 
-            }else {
+            } else {
                 alert('Browser does not support Websockets')
             }
+        }
+
+        window.onload = function () {
+            // event listeners
+            document.getElementById("chatroom-selection").onsubmit = changeChatroom
+            document.getElementById("chatroom-message").onsubmit = sendMessage
+            document.getElementById("login-form").onsubmit = login
         }
 
     </script>
