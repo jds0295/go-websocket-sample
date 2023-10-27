@@ -119,7 +119,7 @@
             if (window["WebSocket"]) {
                 console.log("suports websockets")
                 // connect to WS
-                conn = new WebSocket("ws://" + document.location.host + "/ws?otp="+otp)
+                conn = new WebSocket("wss://" + document.location.host + "/ws?otp="+otp)
 
                 conn.onopen = function (evt) {
                     document.getElementById("connection-header").innerHTML = "Connect to Websocket: true"
